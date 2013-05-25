@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 public class MosaicMaker
 {
@@ -13,8 +14,12 @@ public class MosaicMaker
 		{
 			regionIndex = integer;
 		}
+		
 		public ArrayList<Point> points = new ArrayList<Point>();
 		public int regionIndex;
+		public boolean selected = false;
+		
+		Map<Integer,ArrayList<Point>> levelLines = new TreeMap<Integer,ArrayList<Point>>();
 	}
 	
 	int width,height;
@@ -23,6 +28,8 @@ public class MosaicMaker
 	float distance[];	
 	
 	int size;
+	
+	int levelLine[];
 	
 	public MosaicMaker(int width, int height, int[] pixel,int _size)
 	{
@@ -43,36 +50,54 @@ public class MosaicMaker
 		return y * width + x;
 	}
 	
-	int levelLine[];
-	
 	public int[] getLevelLineMat()
 	{
-		for (int y = 0; y < height; y++) // for each row
-		{
-			for (int x = 0; x < width; x++) // for each column
+		for(Region region : regions.values())
+		{			
+			for(Point point : region.points)
 			{
-				int index = getArrayIndex(x,y);
-				int m = (int)distance[index] % (2*this.size); 
+				int index = getArrayIndex(point.x,point.y);
+				int dist = (int)distance[index];
 				
-				if(m == 0)
+				if(region.levelLines.get(dist) == null)
 				{
-					levelLine[index] = 1;
+					region.levelLines.put(dist,new ArrayList<Point>());
 				}
-				else if(m == this.size)
-				{
-					levelLine[index] = 2;
-				}
-				else
-				{
-					levelLine[index] = 0;
-				}
+				region.levelLines.get(dist).add(point);
 			}
 		}
+		
+		for(Region region : regions.values())
+		{			
+			for(Integer dist : region.levelLines.keySet())
+			{
+				ArrayList<Point> line = region.levelLines.get(dist);
+				for(Point point : line)
+				{
+					int m = (int)dist % (2*this.size); 
+					
+					int index = getArrayIndex(point.x,point.y);
+					if(m == 0)
+					{
+						levelLine[index] = 1;
+					}
+					else if(m == this.size)
+					{
+						levelLine[index] = 2;
+					}
+					else
+					{
+						levelLine[index] = 0;
+					}					
+				}
+			}
+		}		
 		
 		return levelLine;
 	}
 	
-	float gradient[]; 
+	float gradient[];
+	private Map<Integer,Region> regions; 
 
 	public float[] getGradientMat()
 	{
@@ -102,8 +127,7 @@ public class MosaicMaker
 			regionIndices.add(parent[i]);			
 		}
 		
-		//[2]get regions
-		Map<Integer,Region> regions = new HashMap<Integer,Region>();
+		regions = new HashMap<Integer,Region>();
 		for(Integer integer : regionIndices)
 		{
 			Region region = new Region(integer);
@@ -223,5 +247,11 @@ public class MosaicMaker
 		}
 		return false;
 	}
+
+	ArrayList<Integer> selected = null;
 	
+	public void setSelected(ArrayList<Integer> _selected)
+	{
+		this.selected = _selected;
+	}
 }
