@@ -10,6 +10,7 @@ import java.awt.event.AdjustmentEvent;
 import java.awt.event.AdjustmentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.awt.image.BufferedImage;
 import java.awt.image.ImageProducer;
 import java.awt.image.MemoryImageSource;
 import java.io.FileWriter;
@@ -116,9 +117,32 @@ class InputPanel extends Panel implements ActionListener, ItemListener,
 			{
 				e.printStackTrace();
 			}
-		}		
+		}
+		
+		if(ev.getActionCommand().equals("Push me to Pave Tiles!"))
+		{
+			try
+			{
+				paveTile();
+			} 
+			catch (IOException e)
+			{
+				e.printStackTrace();
+			}			
+		}
 	}
 	
+	private void paveTile() throws IOException
+	{
+		ImageProducer ip = new MemoryImageSource(applet.pg.getWidth(), applet.pg.getHeight(),
+				applet.rastero, 0, applet.pg.getWidth());
+		
+		BufferedImage bufferedImage = new BufferedImage(applet.pg.getWidth(), applet.pg.getHeight(),BufferedImage.TYPE_INT_ARGB);		
+		applet.imgseg = bufferedImage;	
+		mosaicMaker.paveTile(applet.imgseg);
+		applet.imageCanvas.repaint();
+	}
+
 	private void getLevelLineMat() throws IOException
 	{
 		int[] llmat = mosaicMaker.getLevelLineMat();
@@ -173,7 +197,7 @@ class InputPanel extends Panel implements ActionListener, ItemListener,
 		
 		applet.imageCanvas.repaint();
 		applyButton.setEnabled(true);
-		applyButton.setLabel("Push me to Get Gradient!");			
+		applyButton.setLabel("Push me to Pave Tiles!");			
 	}
 	
 	private void getGradientMat() throws IOException
@@ -216,7 +240,7 @@ class InputPanel extends Panel implements ActionListener, ItemListener,
 			int root = selected.get(0);
 			for(int i=1;i<selected.size();++i)
 			{
-				applet.UF.UnionRoot(root,selected.get(i));
+				root = applet.UF.UnionRoot(root,selected.get(i));
 			}
 		}
 		

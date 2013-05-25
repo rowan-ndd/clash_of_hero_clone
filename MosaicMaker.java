@@ -1,7 +1,12 @@
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Point;
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -17,7 +22,6 @@ public class MosaicMaker
 		
 		public ArrayList<Point> points = new ArrayList<Point>();
 		public int regionIndex;
-		public boolean selected = false;
 		
 		Map<Integer,ArrayList<Point>> levelLines = new TreeMap<Integer,ArrayList<Point>>();
 	}
@@ -52,6 +56,7 @@ public class MosaicMaker
 	
 	public int[] getLevelLineMat()
 	{
+		//put points into each level line due to their distance
 		for(Region region : regions.values())
 		{			
 			for(Point point : region.points)
@@ -253,5 +258,45 @@ public class MosaicMaker
 	public void setSelected(ArrayList<Integer> _selected)
 	{
 		this.selected = _selected;
+	}
+
+	public void paveTile(Image outputImage)
+	{
+		Graphics2D graphics = (Graphics2D)outputImage.getGraphics();
+		
+		//[1]for each region(foreground)
+		for(Region region : regions.values())
+		{	
+			//(foreground)
+			if(selected.contains(region.regionIndex))
+			{
+				for(Integer dist : region.levelLines.keySet())
+				{
+					//[1.1]each line
+					ArrayList<Point> line = region.levelLines.get(dist);
+					
+					//[1.2]each point
+					
+					
+					//[1.3]test distance and in rect
+					//[1.4]draw tile
+						
+						/*
+						AffineTransform saveXform = graphics.getTransform();
+						
+						AffineTransform toCenterAt = new AffineTransform();
+						//toCenterAt.concatenate(at);
+						//point
+						//toCenterAt.translate());
+						
+						graphics.transform(toCenterAt);
+						
+						graphics.setTransform(saveXform);
+						*/
+				}
+			}
+		}
+		
+		
 	}
 }
