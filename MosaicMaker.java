@@ -53,6 +53,91 @@ public class MosaicMaker
 	{
 		return y * width + x;
 	}
+
+	static class Belt
+	{
+		public Belt(int beltCounter)
+		{
+			index = beltCounter;
+		}
+		public int index;
+		public ArrayList<Point> centralLine;
+	}
+	
+	Map<Integer,Belt> belts = new TreeMap<Integer,Belt>();
+	
+	int pixelData[];
+	private float sSize;
+	
+	public void paveTile()
+	{
+		formBelts();
+		
+		//draw tile
+		for(Integer beltIdx : belts.keySet())
+		{
+			Belt belt = belts.get(beltIdx);
+			ArrayList<Point> centralLine  = belt.centralLine;
+			
+			Point prevTilePoint = null;
+			for(Point point : centralLine)
+			{
+				if(prevTilePoint != null)
+				{
+					if(pickAsTilePoint(prevTilePoint,point))
+					{
+						continue;
+					}
+				}
+				
+				int pixelIdx = getArrayIndex(point.x,point.y);
+				//make rotated rect
+				//place pixel in tile
+			}
+		}
+	}
+
+	private boolean pickAsTilePoint(Point prevTilePoint, Point point)
+	{
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	private float getDistance(Point p0, Point p1)
+	{
+		return (float)p0.distance(p1);
+	}
+
+	private void formBelts()
+	{
+		int regionCounter = 0;
+		for(Region region : regions.values())
+		{
+			//distance in ascending order
+			for(Integer dist : region.levelLines.keySet())
+			{
+				int quotient = (int)dist / (2*this.size);
+				int modulo = (int)dist % (2*this.size);
+				int beltCounter = (regionCounter << 16) + quotient;
+				
+				ArrayList<Point> line = region.levelLines.get(dist);				
+				
+				//green line
+				if(modulo == this.size)
+				{
+					belts.put(beltCounter, new Belt(beltCounter));
+					belts.get(beltCounter).centralLine = line;
+				}
+				
+				for(Point point : line)
+				{
+					int index = getArrayIndex(point.x,point.y);
+					pixelData[index] = beltCounter;
+				}				
+			}
+			++regionCounter;
+		}
+	}
 	
 	public int[] getLevelLineMat()
 	{
@@ -258,45 +343,5 @@ public class MosaicMaker
 	public void setSelected(ArrayList<Integer> _selected)
 	{
 		this.selected = _selected;
-	}
-
-	public void paveTile(Image outputImage)
-	{
-		Graphics2D graphics = (Graphics2D)outputImage.getGraphics();
-		
-		//[1]for each region(foreground)
-		for(Region region : regions.values())
-		{	
-			//(foreground)
-			if(selected.contains(region.regionIndex))
-			{
-				for(Integer dist : region.levelLines.keySet())
-				{
-					//[1.1]each line
-					ArrayList<Point> line = region.levelLines.get(dist);
-					
-					//[1.2]each point
-					
-					
-					//[1.3]test distance and in rect
-					//[1.4]draw tile
-						
-						/*
-						AffineTransform saveXform = graphics.getTransform();
-						
-						AffineTransform toCenterAt = new AffineTransform();
-						//toCenterAt.concatenate(at);
-						//point
-						//toCenterAt.translate());
-						
-						graphics.transform(toCenterAt);
-						
-						graphics.setTransform(saveXform);
-						*/
-				}
-			}
-		}
-		
-		
 	}
 }

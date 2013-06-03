@@ -139,7 +139,7 @@ class InputPanel extends Panel implements ActionListener, ItemListener,
 		
 		BufferedImage bufferedImage = new BufferedImage(applet.pg.getWidth(), applet.pg.getHeight(),BufferedImage.TYPE_INT_ARGB);		
 		applet.imgseg = bufferedImage;	
-		mosaicMaker.paveTile(applet.imgseg);
+		mosaicMaker.paveTile();
 		applet.imageCanvas.repaint();
 	}
 
