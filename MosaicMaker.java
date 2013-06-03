@@ -1,12 +1,7 @@
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.Image;
 import java.awt.Point;
-import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -31,11 +26,9 @@ public class MosaicMaker
 	int parent[];
 	float distance[];	
 	
-	int size;
-	
 	int levelLine[];
 	
-	public MosaicMaker(int width, int height, int[] pixel,int _size)
+	public MosaicMaker(int width, int height, int[] pixel,int tileW, int tileH)
 	{
 		super();
 		this.width = width;
@@ -46,7 +39,8 @@ public class MosaicMaker
 		distance = new float[width*height];
 		levelLine = new int[width*height];
 		
-		size = _size;
+		sSize = tileW;
+		tSize = tileH;
 	}
 	
 	private int getArrayIndex(int x,int y)
@@ -67,13 +61,15 @@ public class MosaicMaker
 	Map<Integer,Belt> belts = new TreeMap<Integer,Belt>();
 	
 	int pixelData[];
-	private float sSize;
+	private int sSize;
+	private int tSize;
 	
-	public void paveTile()
+	public int[] paveTile()
 	{
 		formBelts();
-		
+		return pixelData;
 		//draw tile
+		/*
 		for(Integer beltIdx : belts.keySet())
 		{
 			Belt belt = belts.get(beltIdx);
@@ -84,17 +80,45 @@ public class MosaicMaker
 			{
 				if(prevTilePoint != null)
 				{
-					if(pickAsTilePoint(prevTilePoint,point))
+					if(false == pickAsTilePoint(prevTilePoint,point))
 					{
 						continue;
 					}
-				}
-				
-				int pixelIdx = getArrayIndex(point.x,point.y);
+					else
+					{
+						prevTilePoint = point;
+					}
+				}				
+
 				//make rotated rect
 				//place pixel in tile
+				Rectangle rect = new Rectangle(-sSize/2,-tSize/2,sSize,tSize);		
+				AffineTransform transform = new AffineTransform();
+				Shape shape = transform.createTransformedShape(rect);
+				Rectangle bound = shape.getBounds();
+				
+				
+				
+				for(int x=0;x<bound.width;++x)
+				{
+					for(int y=0;y<bound.height;++y)
+					{
+						Point pixel = new Point(rect.x + x,rect.y + y);	
+						
+						if(shape.contains(pixel))
+						{
+							int pixelIdx = getArrayIndex((int)pixel.getX(),(int)pixel.getY());
+							if(pixelData[pixelIdx] == beltIdx)
+							{
+								//do pixel shading here
+							}
+						}
+		
+					}
+				}
 			}
 		}
+		*/
 	}
 
 	private boolean pickAsTilePoint(Point prevTilePoint, Point point)
@@ -116,14 +140,14 @@ public class MosaicMaker
 			//distance in ascending order
 			for(Integer dist : region.levelLines.keySet())
 			{
-				int quotient = (int)dist / (2*this.size);
-				int modulo = (int)dist % (2*this.size);
+				int quotient = (int)dist / (2*this.tSize);
+				int modulo = (int)dist % (2*this.tSize);
 				int beltCounter = (regionCounter << 16) + quotient;
 				
 				ArrayList<Point> line = region.levelLines.get(dist);				
 				
 				//green line
-				if(modulo == this.size)
+				if(modulo == this.tSize)
 				{
 					belts.put(beltCounter, new Belt(beltCounter));
 					belts.get(beltCounter).centralLine = line;
@@ -164,14 +188,14 @@ public class MosaicMaker
 				ArrayList<Point> line = region.levelLines.get(dist);
 				for(Point point : line)
 				{
-					int m = (int)dist % (2*this.size); 
+					int m = (int)dist % (2*this.tSize); 
 					
 					int index = getArrayIndex(point.x,point.y);
 					if(m == 0)
 					{
 						levelLine[index] = 1;
 					}
-					else if(m == this.size)
+					else if(m == this.tSize)
 					{
 						levelLine[index] = 2;
 					}

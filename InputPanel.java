@@ -244,7 +244,7 @@ class InputPanel extends Panel implements ActionListener, ItemListener,
 			}
 		}
 		
-		mosaicMaker = new MosaicMaker(applet.w, applet.h, applet.raster,4);
+		mosaicMaker = new MosaicMaker(applet.w, applet.h, applet.raster,16,8);
 		mosaicMaker.setSelected(selected);
 		
 		long t0 = System.currentTimeMillis();
