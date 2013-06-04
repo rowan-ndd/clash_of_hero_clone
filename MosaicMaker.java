@@ -1,4 +1,7 @@
 import java.awt.Point;
+import java.awt.Rectangle;
+import java.awt.Shape;
+import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -39,8 +42,8 @@ public class MosaicMaker
 		distance = new float[width*height];
 		levelLine = new int[width*height];
 		
-		sSize = tileW;
-		tSize = tileH;
+		tileWidth = tileW;
+		tileHeight = tileH;
 		
 		pixelData = new int[width*height];
 	}
@@ -63,26 +66,26 @@ public class MosaicMaker
 	Map<Integer,Belt> belts = new TreeMap<Integer,Belt>();
 	
 	int pixelData[];
-	private int sSize;
-	private int tSize;
+	private int tileWidth;
+	private int tileHeight;
 	
 	public int[] paveTile()
 	{
 		formBelts();
-		return pixelData;
+		
 		//draw tile
-		/*
 		for(Integer beltIdx : belts.keySet())
 		{
 			Belt belt = belts.get(beltIdx);
 			ArrayList<Point> centralLine  = belt.centralLine;
 			
 			Point prevTilePoint = null;
-			for(Point point : centralLine)
+			for(int i=0;i<centralLine.size();++i)
 			{
+				Point point = centralLine.get(i);
 				if(prevTilePoint != null)
 				{
-					if(false == pickAsTilePoint(prevTilePoint,point))
+					if(false == pickNextCentralPoint(prevTilePoint,point,beltIdx,i == centralLine.size()))
 					{
 						continue;
 					}
@@ -94,12 +97,10 @@ public class MosaicMaker
 
 				//make rotated rect
 				//place pixel in tile
-				Rectangle rect = new Rectangle(-sSize/2,-tSize/2,sSize,tSize);		
+				Rectangle rect = new Rectangle(-tileWidth/2,-tileHeight/2,tileWidth,tileHeight);		
 				AffineTransform transform = new AffineTransform();
 				Shape shape = transform.createTransformedShape(rect);
-				Rectangle bound = shape.getBounds();
-				
-				
+				Rectangle bound = shape.getBounds();				
 				
 				for(int x=0;x<bound.width;++x)
 				{
@@ -120,18 +121,25 @@ public class MosaicMaker
 				}
 			}
 		}
-		*/
+		return pixelData;
 	}
-
-	private boolean pickAsTilePoint(Point prevTilePoint, Point point)
+	
+	//by distance and in-rect test
+	private boolean pickNextCentralPoint(Point prevTilePoint, Point point, int beltIdx, boolean isLastInLine)
 	{
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	private float getDistance(Point p0, Point p1)
-	{
-		return (float)p0.distance(p1);
+		int index = this.getArrayIndex(point.x, point.y);
+		
+		if(this.pixelData[index] == beltIdx) return false;
+		
+		double dist = prevTilePoint.distance(point);
+		if(dist > this.tileWidth)//far enough
+		{
+			return true;
+		}
+		else
+		{
+			return isLastInLine;
+		}
 	}
 
 	private void formBelts()
@@ -143,14 +151,14 @@ public class MosaicMaker
 			//distance in ascending order
 			for(Integer dist : region.levelLines.keySet())
 			{
-				int quotient = (int)dist / (2*this.tSize);
-				int modulo = (int)dist % (2*this.tSize);
+				int quotient = (int)dist / (2*this.tileHeight);
+				int modulo = (int)dist % (2*this.tileHeight);
 				int beltCounter = (regionCounter << 16) + quotient;
 				
 				ArrayList<Point> line = region.levelLines.get(dist);				
 				
 				//green line
-				if(modulo == this.tSize)
+				if(modulo == this.tileHeight)
 				{
 					belts.put(beltCounter, new Belt(beltCounter));
 					belts.get(beltCounter).centralLine = line;
@@ -190,14 +198,14 @@ public class MosaicMaker
 				ArrayList<Point> line = region.levelLines.get(dist);
 				for(Point point : line)
 				{
-					int m = (int)dist % (2*this.tSize); 
+					int m = (int)dist % (2*this.tileHeight); 
 					
 					int index = getArrayIndex(point.x,point.y);
 					if(m == 0)
 					{
 						levelLine[index] = 1;
 					}
-					else if(m == this.tSize)
+					else if(m == this.tileHeight)
 					{
 						levelLine[index] = 2;
 					}
