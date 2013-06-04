@@ -41,6 +41,8 @@ public class MosaicMaker
 		
 		sSize = tileW;
 		tSize = tileH;
+		
+		pixelData = new int[width*height];
 	}
 	
 	private int getArrayIndex(int x,int y)
@@ -137,6 +139,7 @@ public class MosaicMaker
 		int regionCounter = 0;
 		for(Region region : regions.values())
 		{
+			++regionCounter;
 			//distance in ascending order
 			for(Integer dist : region.levelLines.keySet())
 			{
@@ -158,8 +161,7 @@ public class MosaicMaker
 					int index = getArrayIndex(point.x,point.y);
 					pixelData[index] = beltCounter;
 				}				
-			}
-			++regionCounter;
+			}			
 		}
 	}
 	

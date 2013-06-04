@@ -134,13 +134,26 @@ class InputPanel extends Panel implements ActionListener, ItemListener,
 	
 	private void paveTile() throws IOException
 	{
-		ImageProducer ip = new MemoryImageSource(applet.pg.getWidth(), applet.pg.getHeight(),
-				applet.rastero, 0, applet.pg.getWidth());
+		int beltInfo[] = mosaicMaker.paveTile();
 		
-		BufferedImage bufferedImage = new BufferedImage(applet.pg.getWidth(), applet.pg.getHeight(),BufferedImage.TYPE_INT_ARGB);		
-		applet.imgseg = bufferedImage;	
-		mosaicMaker.paveTile();
+		for (int i = 0; i < applet.h; i++) // for each row
+		{
+			for (int j = 0; j < applet.w; j++) // for each column
+			{
+				int index = i * applet.w + j;
+				Color c = ColorTable.ColorTable[beltInfo[index] % ColorTable.ColorTable.length];
+				int rgba = (0xff000000 | c.getBlue() << 16 | c.getGreen() << 8 | c.getRed());
+				applet.rastero[index] = rgba;					
+			}
+		}
+
+		ImageProducer ip = new MemoryImageSource(applet.pg.getWidth(), applet.pg.getHeight(),
+			applet.rastero, 0, applet.pg.getWidth());
+		applet.imgseg = createImage(ip);		
+	
 		applet.imageCanvas.repaint();
+		applyButton.setEnabled(true);
+		applyButton.setLabel("Push me to Pave Tiles!");				
 	}
 
 	private void getLevelLineMat() throws IOException
