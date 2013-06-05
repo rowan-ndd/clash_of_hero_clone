@@ -2,6 +2,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,7 +46,7 @@ public class MosaicMaker
 		tileWidth = tileW;
 		tileHeight = tileH;
 		
-		pixelData = new int[width*height];
+		beltIdxMat = new int[width*height];
 	}
 	
 	private int getArrayIndex(int x,int y)
@@ -65,7 +66,9 @@ public class MosaicMaker
 	
 	Map<Integer,Belt> belts = new TreeMap<Integer,Belt>();
 	
-	int pixelData[];
+	int beltIdxMat[];
+	int depthBuf[];
+	int outputPixel[];
 	private int tileWidth;
 	private int tileHeight;
 	
@@ -80,6 +83,7 @@ public class MosaicMaker
 			ArrayList<Point> centralLine  = belt.centralLine;
 			
 			Point prevTilePoint = null;
+			int tileIdx = 0;
 			for(int i=0;i<centralLine.size();++i)
 			{
 				Point point = centralLine.get(i);
@@ -89,39 +93,69 @@ public class MosaicMaker
 					{
 						continue;
 					}
-					else
-					{
-						prevTilePoint = point;
-					}
-				}				
-
-				//make rotated rect
-				//place pixel in tile
-				Rectangle rect = new Rectangle(-tileWidth/2,-tileHeight/2,tileWidth,tileHeight);		
-				AffineTransform transform = new AffineTransform();
-				Shape shape = transform.createTransformedShape(rect);
-				Rectangle bound = shape.getBounds();				
-				
-				for(int x=0;x<bound.width;++x)
-				{
-					for(int y=0;y<bound.height;++y)
-					{
-						Point pixel = new Point(rect.x + x,rect.y + y);	
-						
-						if(shape.contains(pixel))
-						{
-							int pixelIdx = getArrayIndex((int)pixel.getX(),(int)pixel.getY());
-							if(pixelData[pixelIdx] == beltIdx)
-							{
-								//do pixel shading here
-							}
-						}
-		
-					}
 				}
+				
+				prevTilePoint = point;
+				tileIdx++;
+				
+				processTilePixel(point,beltIdx, tileIdx);
 			}
 		}
-		return pixelData;
+		return beltIdxMat;
+	}
+
+	private void processTilePixel(Point tileCenter, Integer beltIdx, int z)
+	{
+		//make rotated rect
+		//place pixel in tile
+		Rectangle rect = new Rectangle(-tileWidth/2,-tileHeight/2,tileWidth,tileHeight);	
+		
+		//concat transform ??
+		AffineTransform transform = new AffineTransform();
+		transform.translate(tileCenter.x,tileCenter.y);
+		transform.rotate(gradient[getArrayIndex(tileCenter.x,tileCenter.y)]);		
+		
+		Shape shape = transform.createTransformedShape(rect);
+		Rectangle bound = shape.getBounds();	
+		
+		for(int x=0;x<bound.width;++x)
+		{
+			for(int y=0;y<bound.height;++y)
+			{
+				Point2D pixel = new Point(bound.x + x,bound.y + y);
+				//in rect test
+				if(shape.contains(pixel))
+				{
+					int pixelIdx = getArrayIndex((int)pixel.getX(),(int)pixel.getY());
+					//in belt test
+					if(beltIdxMat[pixelIdx] == beltIdx)
+					{
+						//do pixel shading here
+						//[1]depth test
+						int z0 = depthBuf[pixelIdx];
+						if(z0 < z)//keeps older tile 
+						{
+							continue;
+						}
+						else
+						{
+							depthBuf[pixelIdx] = z;
+						}
+						
+						//[2]color sampling
+						 
+						
+						//[3]border decoration
+						if(x == 0 || y == 0
+							|| x < bound.width-1 || y<bound.height)
+						{
+							this.outputPixel[pixelIdx] = z;
+						}
+					}
+				}
+
+			}
+		}
 	}
 	
 	//by distance and in-rect test
@@ -129,7 +163,7 @@ public class MosaicMaker
 	{
 		int index = this.getArrayIndex(point.x, point.y);
 		
-		if(this.pixelData[index] == beltIdx) return false;
+		if(this.beltIdxMat[index] == beltIdx) return false;
 		
 		double dist = prevTilePoint.distance(point);
 		if(dist > this.tileWidth)//far enough
@@ -151,14 +185,14 @@ public class MosaicMaker
 			//distance in ascending order
 			for(Integer dist : region.levelLines.keySet())
 			{
-				int quotient = (int)dist / (2*this.tileHeight);
-				int modulo = (int)dist % (2*this.tileHeight);
+				int quotient = (int)dist / (this.tileHeight);
+				int modulo = (int)dist % (this.tileHeight);
 				int beltCounter = (regionCounter << 16) + quotient;
 				
 				ArrayList<Point> line = region.levelLines.get(dist);				
 				
 				//green line
-				if(modulo == this.tileHeight)
+				if(modulo == this.tileHeight/2)
 				{
 					belts.put(beltCounter, new Belt(beltCounter));
 					belts.get(beltCounter).centralLine = line;
@@ -167,7 +201,7 @@ public class MosaicMaker
 				for(Point point : line)
 				{
 					int index = getArrayIndex(point.x,point.y);
-					pixelData[index] = beltCounter;
+					beltIdxMat[index] = beltCounter;
 				}				
 			}			
 		}
@@ -198,14 +232,14 @@ public class MosaicMaker
 				ArrayList<Point> line = region.levelLines.get(dist);
 				for(Point point : line)
 				{
-					int m = (int)dist % (2*this.tileHeight); 
+					int m = (int)dist % (this.tileHeight); 
 					
 					int index = getArrayIndex(point.x,point.y);
 					if(m == 0)
 					{
 						levelLine[index] = 1;
 					}
-					else if(m == this.tileHeight)
+					else if(m == this.tileHeight/2)
 					{
 						levelLine[index] = 2;
 					}
