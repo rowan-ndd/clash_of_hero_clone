@@ -110,7 +110,7 @@ public class MosaicMaker
 		//place pixel in tile
 		Rectangle rect = new Rectangle(-tileWidth/2,-tileHeight/2,tileWidth,tileHeight);	
 		
-		//concat transform ??
+		//concat transform 
 		AffineTransform transform = new AffineTransform();
 		transform.translate(tileCenter.x,tileCenter.y);
 		transform.rotate(gradient[getArrayIndex(tileCenter.x,tileCenter.y)]);		
@@ -133,7 +133,7 @@ public class MosaicMaker
 						//do pixel shading here
 						//[1]depth test
 						int z0 = depthBuf[pixelIdx];
-						if(z0 < z)//keeps older tile 
+						if(z0 > z)//keeps older tile 
 						{
 							continue;
 						}
@@ -146,11 +146,6 @@ public class MosaicMaker
 						 
 						
 						//[3]border decoration
-						if(x == 0 || y == 0
-							|| x < bound.width-1 || y<bound.height)
-						{
-							this.outputPixel[pixelIdx] = z;
-						}
 					}
 				}
 
