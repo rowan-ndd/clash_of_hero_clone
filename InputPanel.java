@@ -1,6 +1,7 @@
 import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Color;
+import java.awt.Graphics2D;
 import java.awt.Label;
 import java.awt.Panel;
 import java.awt.Scrollbar;
@@ -11,12 +12,16 @@ import java.awt.event.AdjustmentListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferInt;
 import java.awt.image.ImageProducer;
 import java.awt.image.MemoryImageSource;
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+
+import javax.imageio.ImageIO;
 
 
 //
@@ -134,26 +139,44 @@ class InputPanel extends Panel implements ActionListener, ItemListener,
 	
 	private void paveTile() throws IOException
 	{
-		int beltInfo[] = mosaicMaker.paveTile();
+		/*
+
+		*/
 		
+		BufferedImage bufferedImage = new BufferedImage(applet.pg.getWidth(),applet.pg.getHeight(),BufferedImage.TYPE_INT_RGB);
+		mosaicMaker.paveTile((Graphics2D)bufferedImage.getGraphics());
+		
+		
+		/*
+		int[] a = ((DataBufferInt) bufferedImage.getRaster().getDataBuffer()).getData();
+		ImageProducer ip = new MemoryImageSource(applet.pg.getWidth(), applet.pg.getHeight(),
+				applet.rastero, 0, applet.pg.getWidth());
+		*/
+		
+		applet.imgseg = bufferedImage;
+		
+		
+		/*
 		for (int i = 0; i < applet.h; i++) // for each row
 		{
 			for (int j = 0; j < applet.w; j++) // for each column
 			{
 				int index = i * applet.w + j;
-				Color c = ColorTable.ColorTable[beltInfo[index] % ColorTable.ColorTable.length];
-				int rgba = (0xff000000 | c.getBlue() << 16 | c.getGreen() << 8 | c.getRed());
+				int c = ColorTable.bigTable[beltInfo[index] % ColorTable.bigTable.length];
+				int rgba = (0xff000000 | c << 16 | c << 8 | c);
 				applet.rastero[index] = rgba;					
 			}
 		}
+		*/
 
-		ImageProducer ip = new MemoryImageSource(applet.pg.getWidth(), applet.pg.getHeight(),
-			applet.rastero, 0, applet.pg.getWidth());
-		applet.imgseg = createImage(ip);		
+		
 	
 		applet.imageCanvas.repaint();
 		applyButton.setEnabled(true);
-		applyButton.setLabel("Push me to Pave Tiles!");				
+		applyButton.setLabel("Push me to Pave Tiles!");	
+		
+		File outputfile = new File("saved.png");
+	    ImageIO.write(bufferedImage, "png", outputfile);
 	}
 
 	private void getLevelLineMat() throws IOException
@@ -247,7 +270,8 @@ class InputPanel extends Panel implements ActionListener, ItemListener,
 		
 	private void getDitanceMat() throws IOException
 	{
-		//merge foreground
+		//TODO: only merge disjoint foreground
+		/*
 		if(selected.size() > 1)
 		{
 			int root = selected.get(0);
@@ -256,8 +280,9 @@ class InputPanel extends Panel implements ActionListener, ItemListener,
 				root = applet.UF.UnionRoot(root,selected.get(i));
 			}
 		}
+		*/
 		
-		mosaicMaker = new MosaicMaker(applet.w, applet.h, applet.raster,16,8);
+		mosaicMaker = new MosaicMaker(applet.w, applet.h, applet.raster,32,32);
 		mosaicMaker.setSelected(selected);
 		
 		long t0 = System.currentTimeMillis();

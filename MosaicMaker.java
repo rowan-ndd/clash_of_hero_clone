@@ -1,5 +1,9 @@
+import java.awt.Color;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Point2D;
@@ -47,6 +51,7 @@ public class MosaicMaker
 		tileHeight = tileH;
 		
 		beltIdxMat = new int[width*height];
+		depthBuf = new int[width*height];
 	}
 	
 	private int getArrayIndex(int x,int y)
@@ -71,104 +76,235 @@ public class MosaicMaker
 	int outputPixel[];
 	private int tileWidth;
 	private int tileHeight;
-	
-	public int[] paveTile()
+
+	public int[] paveTile(Graphics2D graphics)
 	{
 		formBelts();
-		
+		//return beltIdxMat;
+		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+		Rectangle bounds = graphics.getDeviceConfiguration().getBounds();
+		graphics.setColor(Color.BLACK);
+		graphics.clearRect(0, 0, bounds.width, bounds.height);
+
 		//draw tile
+		int tileIdx = 1;
+		int count = 0;//debug counter
 		for(Integer beltIdx : belts.keySet())
 		{
 			Belt belt = belts.get(beltIdx);
 			ArrayList<Point> centralLine  = belt.centralLine;
 			
-			Point prevTilePoint = null;
-			int tileIdx = 0;
+			ArrayList<Point> centralPoints = new ArrayList<Point>();;
 			for(int i=0;i<centralLine.size();++i)
 			{
 				Point point = centralLine.get(i);
-				if(prevTilePoint != null)
+				if(false == pickNextCentralPoint(centralPoints,point,tileIdx,i == centralLine.size()-1))
 				{
-					if(false == pickNextCentralPoint(prevTilePoint,point,beltIdx,i == centralLine.size()))
-					{
-						continue;
-					}
+					continue;
+				}
+				else
+				{
+					centralPoints.add(point);
 				}
 				
-				prevTilePoint = point;
+				//int idx = this.getArrayIndex(point.x, point.y);
+				//System.out.print("x=" + point.x +  " y=" + point.y + " ");
 				tileIdx++;
 				
-				processTilePixel(point,beltIdx, tileIdx);
+				//depthBuf[idx] = tileIdx;
+				processTilePixel4(point, beltIdx, tileIdx, graphics);
+				count++;
+				//if(count >= 128) return depthBuf;
 			}
+			//System.out.println("");			
 		}
-		return beltIdxMat;
+		return null;
 	}
 
-	private void processTilePixel(Point tileCenter, Integer beltIdx, int z)
+	
+	public int[] paveTile_origin(Graphics2D graphics)
+	{
+		formBelts();
+		//return beltIdxMat;
+		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		Rectangle bounds = graphics.getDeviceConfiguration().getBounds();
+		graphics.setColor(Color.BLACK);
+		graphics.clearRect(0, 0, bounds.width, bounds.height);
+
+		//draw tile
+		int tileIdx = 1;
+		int count = 0;//debug counter
+		for(Integer beltIdx : belts.keySet())
+		{
+			Belt belt = belts.get(beltIdx);
+			ArrayList<Point> centralLine  = belt.centralLine;
+			
+			ArrayList<Point> centralPoints = new ArrayList<Point>();;
+			for(int i=0;i<centralLine.size();++i)
+			{
+				Point point = centralLine.get(i);
+				if(false == pickNextCentralPoint(centralPoints,point,tileIdx,i == centralLine.size()-1))
+				{
+					continue;
+				}
+				else
+				{
+					centralPoints.add(point);
+				}
+				
+				//int idx = this.getArrayIndex(point.x, point.y);
+				//System.out.print("x=" + point.x +  " y=" + point.y + " ");
+				tileIdx++;
+				
+				//depthBuf[idx] = tileIdx;
+				processTilePixel4(point, beltIdx, tileIdx, graphics);
+				count++;
+				//if(count >= 128) return depthBuf;
+			}
+			//System.out.println("");			
+		}
+		return null;
+	}
+
+	private void processTilePixel4(Point tileCenter, Integer beltIdx, int tileIdx, Graphics2D graphics)
 	{
 		//make rotated rect
-		//place pixel in tile
+		Rectangle rect = new Rectangle(-tileWidth/2,-tileHeight/2,tileWidth,tileHeight);	
+		
+		//concat transform 
+		//transform.rotate(gradient[getArrayIndex(tileCenter.x,tileCenter.y)]);
+		
+		 // Get the current transform
+		 AffineTransform saveAT = graphics.getTransform();
+		 // Perform transformation
+		 graphics.translate(tileCenter.x,tileCenter.y);	
+		 graphics.rotate(gradient[getArrayIndex(tileCenter.x,tileCenter.y)]);
+		 // Render
+		 int color = ColorTable.bigTable[tileIdx % ColorTable.bigTable.length];
+		 graphics.setColor(new Color(color));
+		 graphics.fill(rect);
+		 // Restore original transform
+		 graphics.setTransform(saveAT);		
+	}	
+	
+	private void processTilePixel3(Point tileCenter, Integer beltIdx, int z)
+	{
+		//make rotated rect
 		Rectangle rect = new Rectangle(-tileWidth/2,-tileHeight/2,tileWidth,tileHeight);	
 		
 		//concat transform 
 		AffineTransform transform = new AffineTransform();
-		transform.translate(tileCenter.x,tileCenter.y);
-		transform.rotate(gradient[getArrayIndex(tileCenter.x,tileCenter.y)]);		
+		transform.translate(tileCenter.x,tileCenter.y);	
+		//transform.rotate(Math.PI*0.25);
+		transform.rotate(gradient[getArrayIndex(tileCenter.x,tileCenter.y)]);
 		
 		Shape shape = transform.createTransformedShape(rect);
-		Rectangle bound = shape.getBounds();	
 		
-		for(int x=0;x<bound.width;++x)
+		Rectangle bound = shape.getBounds();
+		
+		for(int x=0; x<(int)bound.getWidth(); ++x)
 		{
-			for(int y=0;y<bound.height;++y)
+			for(int y=0; y<(int)bound.getHeight(); ++y)
 			{
-				Point2D pixel = new Point(bound.x + x,bound.y + y);
-				//in rect test
+				Point2D pixel = new Point(x + (int)bound.getX(),y + (int)bound.getY());
+				
+				if((int)pixel.getX() < 0 || (int)pixel.getY() < 0
+						|| (int)pixel.getX() >= this.width || (int)pixel.getY() >= this.height)
+				{
+					continue;
+				}
+				
 				if(shape.contains(pixel))
 				{
+					//in rect test
 					int pixelIdx = getArrayIndex((int)pixel.getX(),(int)pixel.getY());
 					//in belt test
-					if(beltIdxMat[pixelIdx] == beltIdx)
-					{
+					if(beltIdxMat[pixelIdx] == beltIdx)						
+					{					
 						//do pixel shading here
 						//[1]depth test
 						int z0 = depthBuf[pixelIdx];
-						if(z0 > z)//keeps older tile 
-						{
-							continue;
-						}
-						else
+						if(z0 == 0)//keeps older tile
 						{
 							depthBuf[pixelIdx] = z;
 						}
-						
-						//[2]color sampling
-						 
-						
-						//[3]border decoration
-					}
+						else if(z0 > z)
+						{
+							//depthBuf[pixelIdx] = z;
+						}
+						else
+						{
+							continue;
+						}
+					}					
 				}
-
 			}
 		}
-	}
+	}	
+
+	private void processTilePixel2(Point tileCenter, Integer beltIdx, int z)
+	{
+		//make rotated rect
+		//place pixel in tile	
+		//int R = this.tileHeight;
+		for(int x=0;x<this.tileWidth;++x)
+		{
+			for(int y=0;y<this.tileHeight;++y)
+			{
+				Point2D pixel = new Point(tileCenter.x - tileWidth/2 + x,tileCenter.y - tileHeight/2 + y);
+				
+				if((int)pixel.getX() < 0 || (int)pixel.getY() < 0
+						|| (int)pixel.getX() >= this.width || (int)pixel.getY() >= this.height)
+				{
+					continue;
+				}
+				
+				//in rect test
+				int pixelIdx = getArrayIndex((int)pixel.getX(),(int)pixel.getY());
+				//in belt test
+				if(beltIdxMat[pixelIdx] == beltIdx)						
+				{					
+					//do pixel shading here
+					//[1]depth test
+					int z0 = depthBuf[pixelIdx];
+					if(z0 == 0)//keeps older tile
+					{
+						depthBuf[pixelIdx] = z;
+					}
+					else if(z0 > z)
+					{
+						//depthBuf[pixelIdx] = z;
+					}
+					else
+					{
+						continue;
+					}
+				}
+			}
+		}
+	}	
 	
 	//by distance and in-rect test
-	private boolean pickNextCentralPoint(Point prevTilePoint, Point point, int beltIdx, boolean isLastInLine)
+	private boolean pickNextCentralPoint(ArrayList<Point> prevCentralPoints, Point point, int tileIdx, boolean isLastInLine)
 	{
 		int index = this.getArrayIndex(point.x, point.y);
 		
-		if(this.beltIdxMat[index] == beltIdx) return false;
+		if(this.depthBuf[index] == tileIdx) return false;
 		
-		double dist = prevTilePoint.distance(point);
-		if(dist > this.tileWidth)//far enough
+		if(isLastInLine)
 		{
 			return true;
 		}
-		else
+		
+		for(Point prevCentralPoint : prevCentralPoints)
 		{
-			return isLastInLine;
+			double dist = prevCentralPoint.distance(point);
+			if(dist < (this.tileWidth)/2 )//TODO:what is the proper threshold??
+			{				
+					return false;
+			}
 		}
+		return true;
 	}
 
 	private void formBelts()
@@ -176,6 +312,11 @@ public class MosaicMaker
 		int regionCounter = 0;
 		for(Region region : regions.values())
 		{
+			if(!this.selected.contains(region.regionIndex))
+			{
+				continue;
+			}
+			
 			++regionCounter;
 			//distance in ascending order
 			for(Integer dist : region.levelLines.keySet())

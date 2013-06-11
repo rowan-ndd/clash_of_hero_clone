@@ -21,24 +21,24 @@ import java.awt.Color;
 
 public interface ColorTable
 {
-	public static Color[] ColorTable = 
+	public static int ColorTable[] = 
 	{
-		new Color(0,0,0),
-		new Color(255,255,255),
-		new Color(255,0,0),
-		new Color(0,255,0),
-		new Color(0,0,255),
-		new Color(255,255,0),
-		new Color(0,255,255),
-		new Color(255,0,255),
-		new Color(192,192,192),
-		new Color(128,128,128),
-		new Color(128,0,0),
-		new Color(128,128,0),
-		new Color(0,128,0),
-		new Color(128,0,128),
-		new Color(0,128,128),
-		new Color(0,0,128),
+		0x050505,
+		0xFFFFFF,
+		0xFF0000,
+		0x00FF00,
+		0x0000FF,
+		0xFFFF00,
+		0x00FFFF,
+		0xFF00FF,
+		0xC0C0C0,
+		0x808080,
+		0x800000,
+		0x808000,
+		0x008000,
+		0x800080,
+		0x008080,
+		0x000080,
 	};
 	
 	
