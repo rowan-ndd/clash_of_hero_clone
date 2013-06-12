@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
+
 public class MosaicMaker
 {
 	public class Region
@@ -76,7 +77,7 @@ public class MosaicMaker
 	int outputPixel[];
 	private int tileWidth;
 	private int tileHeight;
-
+	
 	public int[] paveTile(Graphics2D graphics)
 	{
 		formBelts();
@@ -85,6 +86,11 @@ public class MosaicMaker
 		Rectangle bounds = graphics.getDeviceConfiguration().getBounds();
 		graphics.setColor(Color.BLACK);
 		graphics.clearRect(0, 0, bounds.width, bounds.height);
+		
+		ZComposite composite = new ZComposite(bounds.width, bounds.height);
+		composite.clearBufferBit();
+        composite.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);	
+        graphics.setComposite(composite);
 
 		//draw tile
 		int tileIdx = 1;
@@ -112,7 +118,7 @@ public class MosaicMaker
 				tileIdx++;
 				
 				//depthBuf[idx] = tileIdx;
-				processTilePixel4(point, beltIdx, tileIdx, graphics);
+				processTilePixel4(point, beltIdx, tileIdx, graphics,composite);
 				count++;
 				//if(count >= 128) return depthBuf;
 			}
@@ -121,52 +127,7 @@ public class MosaicMaker
 		return null;
 	}
 
-	
-	public int[] paveTile_origin(Graphics2D graphics)
-	{
-		formBelts();
-		//return beltIdxMat;
-		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		Rectangle bounds = graphics.getDeviceConfiguration().getBounds();
-		graphics.setColor(Color.BLACK);
-		graphics.clearRect(0, 0, bounds.width, bounds.height);
-
-		//draw tile
-		int tileIdx = 1;
-		int count = 0;//debug counter
-		for(Integer beltIdx : belts.keySet())
-		{
-			Belt belt = belts.get(beltIdx);
-			ArrayList<Point> centralLine  = belt.centralLine;
-			
-			ArrayList<Point> centralPoints = new ArrayList<Point>();;
-			for(int i=0;i<centralLine.size();++i)
-			{
-				Point point = centralLine.get(i);
-				if(false == pickNextCentralPoint(centralPoints,point,tileIdx,i == centralLine.size()-1))
-				{
-					continue;
-				}
-				else
-				{
-					centralPoints.add(point);
-				}
-				
-				//int idx = this.getArrayIndex(point.x, point.y);
-				//System.out.print("x=" + point.x +  " y=" + point.y + " ");
-				tileIdx++;
-				
-				//depthBuf[idx] = tileIdx;
-				processTilePixel4(point, beltIdx, tileIdx, graphics);
-				count++;
-				//if(count >= 128) return depthBuf;
-			}
-			//System.out.println("");			
-		}
-		return null;
-	}
-
-	private void processTilePixel4(Point tileCenter, Integer beltIdx, int tileIdx, Graphics2D graphics)
+	private void processTilePixel4(Point tileCenter, Integer beltIdx, int tileIdx, Graphics2D graphics,ZComposite composite)
 	{
 		//make rotated rect
 		Rectangle rect = new Rectangle(-tileWidth/2,-tileHeight/2,tileWidth,tileHeight);	
@@ -182,6 +143,8 @@ public class MosaicMaker
 		 // Render
 		 int color = ColorTable.bigTable[tileIdx % ColorTable.bigTable.length];
 		 graphics.setColor(new Color(color));
+
+		 composite.setValueResolver(ZValueResolverFactory.createDepthResolver(new int[]{1,1,1}, new int[] {1,1,1},tileIdx));
 		 graphics.fill(rect);
 		 // Restore original transform
 		 graphics.setTransform(saveAT);		
