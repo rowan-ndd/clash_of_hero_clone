@@ -7,10 +7,17 @@ public class ZDepthResolver implements ZValueResolver
 	private Shape s = null;
 	private boolean b = false;
 	private double depth = 0.0f;
+	private int beltIndex = 0;
 	
-	public ZDepthResolver(double z)
+	public int getBeltIndex()
+	{
+		return beltIndex;
+	}
+
+	public ZDepthResolver(double z, int beltIdx)
 	{
 		depth = z;
+		beltIndex = beltIdx;
 	}
 
 	@Override

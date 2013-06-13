@@ -24,9 +24,9 @@ public class ZCompositeContext implements CompositeContext {
 	 * {@inheritDoc}
 	 */
 	public void compose(Raster src, Raster dstIn, WritableRaster dstOut) {
-		ZValueResolver zValueResolver = zComposite.getValueResolver();
+		ZDepthResolver zdepthResolver = (ZDepthResolver)zComposite.getValueResolver();
 		
-		if (zValueResolver == null) {
+		if (zdepthResolver == null) {
 			throw new IllegalArgumentException("You must set a ZValueResolver before draw any polygon with this composite");
 		}
 		
@@ -39,7 +39,12 @@ public class ZCompositeContext implements CompositeContext {
 				int dstInY = -dstIn.getSampleModelTranslateY() + y;
 				
 				double dstZ = zComposite.getZOf(dstInX, dstInY);
-				double srcZ = zValueResolver.resolve(dstInX, dstInY);
+				double srcZ = zdepthResolver.resolve(dstInX, dstInY);
+				
+				int dstBeltIdx = zComposite.getBeltIndex(dstInX, dstInY);
+				int srcBeltIdx = zdepthResolver.getBeltIndex();
+				
+				if(srcBeltIdx != dstBeltIdx) continue;//can not draw out of bound
 
 				if (srcZ < dstZ) {
 					zComposite.setZOf(dstInX, dstInY, srcZ);

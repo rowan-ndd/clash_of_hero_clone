@@ -15,14 +15,16 @@ public class ZComposite implements Composite {
 	protected double[] buffer;
 	protected int width;
 	protected int height;
+	protected int[] beltIdxBuffer;
 	
 	protected ZValueResolver valueResolver;
 	protected boolean antialiasingEnabled;
 	
-	public ZComposite(int width, int height) {
+	public ZComposite(int width, int height, int _beltIdxBuffer[]) {
 		this.antialiasingEnabled = false;
 		this.width = width +1; //
 		setSize(width, height);
+		beltIdxBuffer = _beltIdxBuffer;
 	}
 	
 	public void setSize(int newWidth, int newHeight) {
@@ -119,6 +121,12 @@ public class ZComposite implements Composite {
 		if (RenderingHints.KEY_ANTIALIASING.equals(key)) {
 			this.antialiasingEnabled = RenderingHints.VALUE_ANTIALIAS_ON.equals(value);
 		}
+	}
+
+	public int getBeltIndex(int x, int y)
+	{
+		int index = y * width + x;
+		return beltIdxBuffer[index];
 	}
 	
 }

@@ -17,10 +17,10 @@ public class ZValueResolverFactory {
 	 * @param z3 z-coordinate for point[2,2]
 	 * @return
 	 */
-	public static ZDepthResolver createDepthResolver(final int[] xpoints, final int[] ypoints, double z)
+	public static ZDepthResolver createDepthResolver(final int[] xpoints, final int[] ypoints, double z, int beltIdx)
 	{
 		GeneralPath generalPath = createClippingShape(xpoints, ypoints);
-		ZDepthResolver resolver = new ZDepthResolver(z);
+		ZDepthResolver resolver = new ZDepthResolver(z , beltIdx);
 		resolver.setClippingShape(generalPath);
 		
 		return resolver;
