@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -85,14 +86,47 @@ public class MosaicMaker
 	private int tileWidth;
 	private int tileHeight;
 	
-	public int[] paveTile(Graphics2D graphics)
+	private void paveTileBackground(Graphics2D graphics)
 	{
-		formBelts();
-		//return beltIdxMat;
-		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 		Rectangle bounds = graphics.getDeviceConfiguration().getBounds();
 		graphics.setColor(Color.BLACK);
 		graphics.clearRect(0, 0, bounds.width, bounds.height);
+		
+
+		int backTileHeight = tileHeight/2;
+		int backTileWidth  = tileWidth;
+		//Random rand = new Random();
+		
+		int[] randY = {0,-backTileHeight/2};
+		int[] randX = {0,-backTileWidth/2};
+		
+		int count = 0;
+		for(int y = randY[count%2],sample_y = 0 ; y < this.height; y += backTileHeight,sample_y += backTileHeight)
+		{
+			for(int x = randX[count%2],sample_x = 0; x < this.width; x += backTileWidth,sample_x += backTileWidth)
+			{
+				Rectangle rect = new Rectangle(x,y,backTileWidth,backTileHeight);
+				graphics.setColor(Color.WHITE);
+				graphics.fill(rect);		
+				
+				rect = new Rectangle(x+1,y+1,backTileWidth-1,backTileHeight-1);
+				int color = pixel[getArrayIndex(sample_x, sample_y)];
+				graphics.setColor(new Color(color));
+				graphics.fill(rect);				
+			}
+			count++;
+		}
+	}
+	
+	public void paveTile(Graphics2D graphics)
+	{
+		paveTileBackground(graphics);
+		
+		formBelts();
+		
+		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
+		Rectangle bounds = graphics.getDeviceConfiguration().getBounds();
 		
 		ZComposite composite = new ZComposite(bounds.width, bounds.height, beltIdxMat);
 		composite.clearBufferBit();
@@ -131,7 +165,6 @@ public class MosaicMaker
 			}
 			//System.out.println("");			
 		}
-		return null;
 	}
 
 	private void processTilePixel4(Point tileCenter, Integer beltIdx, int tileIdx, Graphics2D graphics, ZComposite composite)

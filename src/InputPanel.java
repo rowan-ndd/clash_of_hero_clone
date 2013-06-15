@@ -127,8 +127,9 @@ class InputPanel extends Panel implements ActionListener, ItemListener,
 		if(ev.getActionCommand().equals("Push me to Pave Tiles!"))
 		{
 			try
-			{
-				paveTile();
+			{				
+				//paveForegroundTile();
+				paveBackgroundTile();
 			} 
 			catch (IOException e)
 			{
@@ -137,40 +138,26 @@ class InputPanel extends Panel implements ActionListener, ItemListener,
 		}
 	}
 	
-	private void paveTile() throws IOException
+	private void paveBackgroundTile() throws IOException
 	{
-		/*
-
-		*/
-		
 		BufferedImage bufferedImage = new BufferedImage(applet.pg.getWidth(),applet.pg.getHeight(),BufferedImage.TYPE_INT_RGB);
 		mosaicMaker.paveTile((Graphics2D)bufferedImage.getGraphics());
 		
+		applet.imgseg = bufferedImage;
+		applet.imageCanvas.repaint();
+		applyButton.setEnabled(true);
+		applyButton.setLabel("Push me to Pave Tiles!");	
 		
-		/*
-		int[] a = ((DataBufferInt) bufferedImage.getRaster().getDataBuffer()).getData();
-		ImageProducer ip = new MemoryImageSource(applet.pg.getWidth(), applet.pg.getHeight(),
-				applet.rastero, 0, applet.pg.getWidth());
-		*/
+		File outputfile = new File("saved.png");
+	    ImageIO.write(bufferedImage, "png", outputfile);		
+	}
+	
+	private void paveForegroundTile() throws IOException
+	{
+		BufferedImage bufferedImage = new BufferedImage(applet.pg.getWidth(),applet.pg.getHeight(),BufferedImage.TYPE_INT_RGB);
+		mosaicMaker.paveTile((Graphics2D)bufferedImage.getGraphics());
 		
 		applet.imgseg = bufferedImage;
-		
-		
-		/*
-		for (int i = 0; i < applet.h; i++) // for each row
-		{
-			for (int j = 0; j < applet.w; j++) // for each column
-			{
-				int index = i * applet.w + j;
-				int c = ColorTable.bigTable[beltInfo[index] % ColorTable.bigTable.length];
-				int rgba = (0xff000000 | c << 16 | c << 8 | c);
-				applet.rastero[index] = rgba;					
-			}
-		}
-		*/
-
-		
-	
 		applet.imageCanvas.repaint();
 		applyButton.setEnabled(true);
 		applyButton.setLabel("Push me to Pave Tiles!");	
@@ -282,7 +269,7 @@ class InputPanel extends Panel implements ActionListener, ItemListener,
 		}
 		*/
 		
-		mosaicMaker = new MosaicMaker(applet.w, applet.h, applet.raster,16,16);
+		mosaicMaker = new MosaicMaker(applet.w, applet.h, applet.raster,8,8);
 		mosaicMaker.setSelected(selected);
 		
 		long t0 = System.currentTimeMillis();
