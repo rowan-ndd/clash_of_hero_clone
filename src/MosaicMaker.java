@@ -88,11 +88,6 @@ public class MosaicMaker
 	
 	private void paveTileBackground(Graphics2D graphics)
 	{
-		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		Rectangle bounds = graphics.getDeviceConfiguration().getBounds();
-		graphics.setColor(Color.BLACK);
-		graphics.clearRect(0, 0, bounds.width, bounds.height);
-		
 
 		int backTileHeight = tileHeight/2;
 		int backTileWidth  = tileWidth;
@@ -119,15 +114,61 @@ public class MosaicMaker
 		}
 	}
 	
+	public void dilateForeground()
+	{		
+		int iterations = 16;//2 x tileWidth
+		
+		for(int i=0; i<iterations; ++i)
+		{
+			dilateOnce();
+		}
+	}
+	
+	
+	
+	private void dilateOnce()
+	{
+		for (int y = 0; y < height; y++) // for each row
+		{
+			for (int x = 0; x < width; x++) // for each column
+			{
+				int index = this.getArrayIndex(x, y);
+				int pixelParent = parent[index];
+				
+				if(selected.contains(pixelParent))
+				{
+					int offsetX[] = {-1,0,1    -1,1,   -1,0,1};  
+					int offsetY[] = {-1,-1,-1, 	0,0, 	1,1,1};
+					
+					for(int i=0;i<offsetX.length;++i)
+					{
+						Point pixel;
+						/*
+						if(pixel in bound)
+						{
+							if(not foreground)
+							{
+								put to new foreground
+							}
+						}
+						*/
+					}
+				}
+			}
+		}
+	}
+
 	public void paveTile(Graphics2D graphics)
 	{
-		paveTileBackground(graphics);
+		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		Rectangle bounds = graphics.getDeviceConfiguration().getBounds();
+		graphics.setColor(Color.BLACK);
+		graphics.clearRect(0, 0, bounds.width, bounds.height);
+		//paveTileBackground(graphics);
 		
 		formBelts();
 		
 		graphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
-		Rectangle bounds = graphics.getDeviceConfiguration().getBounds();
-		
 		ZComposite composite = new ZComposite(bounds.width, bounds.height, beltIdxMat);
 		composite.clearBufferBit();
         composite.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);	
@@ -159,7 +200,7 @@ public class MosaicMaker
 				tileIdx++;
 				
 				//depthBuf[idx] = tileIdx;
-				processTilePixel4(point, beltIdx, tileIdx, graphics,composite);
+				processTilePixel(point, beltIdx, tileIdx, graphics,composite);
 				count++;
 				//if(count >= 128) return depthBuf;
 			}
@@ -167,10 +208,11 @@ public class MosaicMaker
 		}
 	}
 
-	private void processTilePixel4(Point tileCenter, Integer beltIdx, int tileIdx, Graphics2D graphics, ZComposite composite)
+	private void processTilePixel(Point tileCenter, Integer beltIdx, int tileIdx, Graphics2D graphics, ZComposite composite)
 	{
 		//make rotated rect
-		Rectangle rect = new Rectangle(-tileWidth/2,-tileHeight/2,tileWidth,tileHeight);	
+		int marginSize = 4;
+		Rectangle rect = new Rectangle(-(tileWidth+marginSize)/2, -(tileHeight+marginSize)/2,tileWidth+marginSize,tileHeight+marginSize);	
 		
 		// Get the current transform
 		AffineTransform saveAT = graphics.getTransform();
@@ -178,8 +220,8 @@ public class MosaicMaker
 		graphics.translate(tileCenter.x,tileCenter.y);	
 		graphics.rotate(gradient[getArrayIndex(tileCenter.x,tileCenter.y)]);
 		// Render
-		//int color = ColorTable.bigTable[tileIdx % ColorTable.bigTable.length];
-		int color = pixel[getArrayIndex(tileCenter.x, tileCenter.y)];
+		int color = ColorTable.bigTable[tileIdx % ColorTable.bigTable.length];
+		//int color = pixel[getArrayIndex(tileCenter.x, tileCenter.y)];
 		graphics.setColor(new Color(color));
 		
 		//with depth and beltId test

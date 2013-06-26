@@ -2,6 +2,7 @@ import java.awt.BorderLayout;
 import java.awt.Button;
 import java.awt.Color;
 import java.awt.Graphics2D;
+import java.awt.Image;
 import java.awt.Label;
 import java.awt.Panel;
 import java.awt.Scrollbar;
@@ -216,11 +217,21 @@ class InputPanel extends Panel implements ActionListener, ItemListener,
 		
 		ImageProducer ip = new MemoryImageSource(applet.pg.getWidth(), applet.pg.getHeight(),
 				applet.rastero, 0, applet.pg.getWidth());
-		applet.imgseg = createImage(ip);		
+		Image image = createImage(ip);
+		applet.imgseg = image; 		
 		
 		applet.imageCanvas.repaint();
 		applyButton.setEnabled(true);
 		applyButton.setLabel("Push me to Pave Tiles!");			
+		
+		BufferedImage bImage = new BufferedImage(image.getWidth(null),
+                image.getHeight(null),
+                BufferedImage.TYPE_INT_ARGB);
+		Graphics2D bImageGraphics = bImage.createGraphics();
+		bImageGraphics.drawImage(image, null, null);		
+		
+		File outputfile = new File("level.png");
+		ImageIO.write(bImage, "png", outputfile);
 	}
 	
 	private void getGradientMat() throws IOException
